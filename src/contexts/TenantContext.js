@@ -26,6 +26,7 @@ export const TenantProvider = ({ children }) => {
     if (typeof window === 'undefined') return null;
 
     const host = window.location.host;
+    
     const domain = host.split(':')[0]; // Remove port
 
     // Handle localhost development - superadmin domain
