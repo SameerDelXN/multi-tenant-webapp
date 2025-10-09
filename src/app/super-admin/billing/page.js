@@ -2,14 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Users, TrendingUp, FileText, PlusCircle, Edit3, Trash2, Filter, Download } from 'lucide-react';
-
-// Placeholder data - replace with API calls
-const initialPlans = [
-  { id: 'plan_basic_monthly', name: 'Basic Monthly', price: 49, interval: 'month', features: ['5 Users', 'Basic Scheduling', 'Email Support'], activeSubscriptions: 150, status: 'active' },
-  { id: 'plan_pro_monthly', name: 'Pro Monthly', price: 99, interval: 'month', features: ['15 Users', 'Advanced Scheduling', 'Priority Support', 'CRM'], activeSubscriptions: 85, status: 'active' },
-  { id: 'plan_enterprise_annual', name: 'Enterprise Annual', price: 999, interval: 'year', features: ['Unlimited Users', 'All Features', 'Dedicated Manager'], activeSubscriptions: 20, status: 'active' },
-  { id: 'plan_legacy_free', name: 'Legacy Free Tier', price: 0, interval: 'month', features: ['1 User', 'Limited Features'], activeSubscriptions: 300, status: 'archived' },
-];
+import apiClient from '@/lib/api/apiClient';
 
 const initialTransactions = [
   { id: 'txn_1', tenantName: 'GreenScape Landscaping', planName: 'Pro Monthly', amount: 99, date: '2025-06-01', status: 'Paid', invoiceUrl: '#' },
@@ -46,7 +39,7 @@ const TransactionStatusBadge = ({ status }) => {
 };
 
 export default function BillingManagementPage() {
-  const [plans, setPlans] = useState(initialPlans);
+  const [plans, setPlans] = useState([]);
   const [transactions, setTransactions] = useState(initialTransactions);
   // Add states for modals, filters, etc.
 
@@ -60,6 +53,33 @@ export default function BillingManagementPage() {
       setPlans(plans.filter(p => p.id !== planId));
     }
   };
+
+  // Load real plans from backend (super admin settings)
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const { data } = await apiClient.get('/super-admin/settings/subscription-plans');
+        const plansObj = data?.data || {};
+        // Transform object map -> array compatible with current table
+        const rows = Object.entries(plansObj).map(([key, val]) => ({
+          id: key,
+          name: val.name || key.charAt(0).toUpperCase() + key.slice(1),
+          // Render monthly by default in the existing column; interval kept as 'month'
+          price: Number(val.priceMonthly != null ? val.priceMonthly : val.price) || 0,
+          interval: 'month',
+          features: Array.isArray(val.features) ? val.features : [],
+          // Active subscriptions count not available here; show dash
+          activeSubscriptions: '-',
+          status: 'active',
+        }));
+        setPlans(rows);
+      } catch (e) {
+        console.error('Failed to load plans', e);
+        setPlans([]);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   return (
     <div className="space-y-8 p-2 sm:p-4 md:p-6 w-full max-w-6xl mx-auto">

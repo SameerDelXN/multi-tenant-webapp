@@ -100,6 +100,28 @@ const extractTenantDomain = () => {
   return domain;
 };
 
+// Extract subdomain (left-most label) from a multi-part domain like sub.example.com
+const extractTenantSubdomain = () => {
+  if (typeof window === 'undefined') return null;
+  const host = window.location.host;
+  const domain = host.split(':')[0];
+
+  // Superadmin domains -> no subdomain
+  if (
+    domain === 'localhost' || domain === '127.0.0.1' ||
+    domain === 'www.delxn.club' || domain === 'delxn.club'
+  ) {
+    return null;
+  }
+
+  const parts = domain.split('.');
+  if (parts.length >= 3 && parts[0] !== 'www') {
+    return parts[0];
+  }
+  // For apex custom domains, treat entire domain as subdomain identifier
+  return domain;
+};
+
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
 });
