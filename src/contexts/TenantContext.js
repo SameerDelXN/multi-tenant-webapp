@@ -27,7 +27,11 @@ export const TenantProvider = ({ children }) => {
 
     const host = window.location.host;
     
-    const domain = host.split(':')[0]; // Remove port
+    let domain = host.split(':')[0].toLowerCase(); // Remove port and normalize
+    // Normalize www to apex so www.gardening1.info -> gardening1.info
+    if (domain.startsWith('www.')) {
+      domain = domain.slice(4);
+    }
 
     // Handle localhost development - superadmin domain
     if (domain === 'localhost' || domain === '127.0.0.1') {
@@ -115,6 +119,7 @@ export const TenantProvider = ({ children }) => {
       baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
       headers: {
         'X-Tenant-Subdomain': tenant.subdomain,
+        'X-Tenant-Domain': extractTenant(),
       },
     });
   };
