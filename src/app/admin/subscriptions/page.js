@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import getStripe from '../../../lib/stripe';
@@ -8,7 +8,7 @@ import apiClient from '../../../lib/api/apiClient';
 import { toast } from 'react-hot-toast';
 
 
-export default function TenantSubscriptionsPage() {
+function SubscriptionsContent() {
   const params = useSearchParams();
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [loadingPlan, setLoadingPlan] = useState(null);
@@ -242,5 +242,13 @@ export default function TenantSubscriptionsPage() {
         {/* Bottom Manage billing button removed as requested */}
       </div>
     </AdminLayout>
+  );
+}
+
+export default function TenantSubscriptionsPage() {
+  return (
+    <Suspense fallback={<AdminLayout><div className="max-w-5xl mx-auto p-6 text-center text-gray-500">Loading subscriptions…</div></AdminLayout>}>
+      <SubscriptionsContent />
+    </Suspense>
   );
 }

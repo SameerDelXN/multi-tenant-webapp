@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Link from 'next/link';
 import apiClient from '@/lib/api/apiClient';
 
-export default function SubscriptionSuccessPage() {
+function SubscriptionSuccessContent() {
   const params = useSearchParams();
   const sessionId = params.get('session_id');
   const router = useRouter();
@@ -66,5 +66,13 @@ export default function SubscriptionSuccessPage() {
         </div>
       </div>
     </AdminLayout>
+  );
+}
+
+export default function SubscriptionSuccessPage() {
+  return (
+    <Suspense fallback={<AdminLayout><div className="max-w-2xl mx-auto py-12 text-center text-gray-500">Loading…</div></AdminLayout>}>
+      <SubscriptionSuccessContent />
+    </Suspense>
   );
 }
