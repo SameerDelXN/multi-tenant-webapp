@@ -26,7 +26,7 @@ export const TenantProvider = ({ children }) => {
     if (typeof window === 'undefined') return null;
 
     const host = window.location.host;
-    
+    console.log("host=",host);
     let domain = host.split(':')[0].toLowerCase(); // Remove port and normalize
     // Normalize www to apex so www.gardening1.info -> gardening1.info
     if (domain.startsWith('www.')) {
