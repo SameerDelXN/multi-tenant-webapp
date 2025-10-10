@@ -20,13 +20,12 @@ const ServiceSelection = ({ onNext }) => {
       const apiClient = getTenantApiClient();
       const endpoint = tenant ? '/services' : '/services/public';
       const response = await apiClient.get(endpoint);
-
       setServices(response.data.data || []);
     } catch (error) {
       console.error("Failed to fetch services:", error);
     } finally {
       setLoading(false);
-{{ ... }}
+    }
   };
 
   useEffect(() => {

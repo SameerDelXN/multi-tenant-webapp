@@ -4,6 +4,7 @@ import axios from 'axios';
 import Container from '../../components/ui/Container';
 import PageHeader from '../../components/layout/PageHeader';
 import { useTenant } from '@/contexts/TenantContext';
+import { getTenantApiClient } from '../../lib/api/apiClient';
 
 export default function ContactPage() {
   const { tenant, tenantConfig } = useTenant();
@@ -18,7 +19,6 @@ export default function ContactPage() {
     ]
   });
   const [loading, setLoading] = useState(true);
-
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -29,52 +29,39 @@ export default function ContactPage() {
     message: '',
     agreeToPolicy: false
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchTenantInfo = async () => {
+    const fetchContactInfo = async () => {
       try {
-        if (!tenant?.subdomain) {
-          setLoading(false);
-          return;
-        }
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tenant/info`, {
-          headers: {
-            'X-Tenant-Subdomain': tenant.subdomain,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch tenant info');
-        }
-
-        const data = await response.json();
-        if (data.success) {
+        const apiClient = getTenantApiClient();
+        const response = await apiClient.get('/public/contact-info');
+        const data = response.data;
+        if (data?.success && data?.data) {
           setContactInfo({
-            phone: data.data?.phone || tenantConfig?.businessPhone || '602-793-0597',
-            email: data.data?.email || tenantConfig?.businessEmail || 'grochin2@gmail.com',
-            address: data.data?.address || tenantConfig?.address || '9719 E Clinton St, Scottsdale, AZ 85260',
-            businessHours: data.data?.businessHours?.split('\n') || [
-              'Monday - Friday: 7:00 AM - 5:30 PM',
-              'Saturday: 7:00 AM - 3:00 PM',
-              'Sunday: Closed'
-            ]
+            phone: data.data?.phone || '602-793-0597',
+            email: data.data?.email || 'grochin2@gmail.com',
+            address: data.data?.address || '9719 E Clinton St, Scottsdale, AZ 85260',
+            businessHours: Array.isArray(data.data?.businessHours)
+              ? data.data.businessHours
+              : (data.data?.businessHours ? String(data.data.businessHours).split('\n') : [
+                  'Monday - Friday: 7:00 AM - 5:30 PM',
+                  'Saturday: 7:00 AM - 3:00 PM',
+                  'Sunday: Closed'
+                ])
           });
         }
       } catch (error) {
-        console.error('Error fetching tenant info:', error);
-        // Fallback to default values if API fails
+        console.error('Error fetching contact info:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTenantInfo();
-  }, [tenant?.subdomain, tenantConfig]);
+    fetchContactInfo();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

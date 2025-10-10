@@ -1,4 +1,4 @@
-// import React from 'react';
+﻿// import React from 'react';
 // import Link from 'next/link';
 // import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
@@ -158,7 +158,7 @@
 //       <div className="bg-gray-950 py-4">
 //         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
 //           <p className="text-gray-500 text-sm mb-4 md:mb-0 hover:text-green-500 transition-colors duration-300">
-//             © {new Date().getFullYear()} Gildardo Rochin. All rights reserved.
+//             Â© {new Date().getFullYear()} Gildardo Rochin. All rights reserved.
 //           </p>
 //           <div className="flex space-x-6">
 //             <Link href="/privacy-policy" className="text-gray-500 hover:text-green-500 text-sm transition-colors duration-300">
@@ -205,22 +205,19 @@ const Footer = () => {
   useEffect(() => {
     const fetchTenantInfo = async () => {
       try {
-        if (!tenant?.subdomain) {
-          setLoading(false);
-          return;
-        }
+        
 
         const apiClient = getTenantApiClient();
-        const response = await apiClient.get('/tenant/info');
+        const response = await apiClient.get('/public/contact-info');
 
         const data = response.data;
         if (data.success) {
           setContactInfo({
-            businessName: data.data?.name || tenantConfig?.name || '',
+            businessName: (data.data?.businessName || data.data?.name || tenantConfig?.name || ''),
             phone: data.data?.phone || tenantConfig?.businessPhone || '602-793-0597',
             email: data.data?.email || tenantConfig?.businessEmail || 'grochin2@gmail.com',
             address: data.data?.address || tenantConfig?.address || '9719 E Clinton St, Scottsdale, AZ 85260',
-            businessHours: data.data?.businessHours?.split('\n') || [
+            businessHours: (Array.isArray(data.data?.businessHours) ? data.data.businessHours : (data.data?.businessHours ? String(data.data.businessHours).split('\\n') : null)) || [
               'Monday - Friday: 7:00 AM - 5:30 PM',
               'Saturday: 7:00 AM - 3:00 PM',
               'Sunday: Closed'
@@ -236,7 +233,7 @@ const Footer = () => {
     };
 
     fetchTenantInfo();
-  }, [tenant?.subdomain, tenantConfig]);
+  }, []);
 
   if (loading) {
     return (
@@ -409,7 +406,7 @@ const Footer = () => {
       <div className="bg-gray-950 py-4">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm mb-4 md:mb-0 hover:text-green-500 transition-colors duration-300">
-            © {new Date().getFullYear()} {contactInfo.businessName || 'Landscaping Services'}. All rights reserved.
+            Â© {new Date().getFullYear()} {contactInfo.businessName || 'Landscaping Services'}. All rights reserved.
           </p>
           <div className="flex space-x-6">
             <Link href="/" className="text-gray-500 hover:text-green-500 text-sm transition-colors duration-300">
@@ -429,3 +426,5 @@ const Footer = () => {
 };
 
 export default Footer;
+
+

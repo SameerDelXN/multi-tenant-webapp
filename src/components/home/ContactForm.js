@@ -264,10 +264,8 @@ const ContactForm = () => {
   useEffect(() => {
     const fetchTenantInfo = async () => {
       try {
-        if (!tenant?.subdomain) return;
-
         const apiClient = getTenantApiClient();
-        const response = await apiClient.get('/tenant/info');
+        const response = await apiClient.get('/public/contact-info');
 
         const data = response.data;
         if (data.success) {
@@ -275,11 +273,19 @@ const ContactForm = () => {
             phone: data.data?.phone || tenantConfig?.businessPhone || '602-793-0597',
             email: data.data?.email || tenantConfig?.businessEmail || 'grochin2@gmail.com',
             address: data.data?.address || tenantConfig?.address || '9719 E Clinton St, Scottsdale, AZ 85260',
-            businessHours: data.data?.businessHours?.split('\n') || [
-              'Monday - Friday: 7:00 AM - 5:30 PM',
-              'Saturday: 7:00 AM - 3:00 PM',
-              'Sunday: Closed'
-            ]
+            businessHours: (
+              Array.isArray(data.data?.businessHours)
+                ? data.data.businessHours
+                : (
+                    data.data?.businessHours
+                      ? String(data.data.businessHours).split('\n')
+                      : [
+                          'Monday - Friday: 7:00 AM - 5:30 PM',
+                          'Saturday: 7:00 AM - 3:00 PM',
+                          'Sunday: Closed'
+                        ]
+                  )
+            )
           });
         }
       } catch (error) {

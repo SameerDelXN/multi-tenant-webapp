@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useDashboard } from "../../contexts/DashboardContext";
 import Container from "../../components/ui/Container";
 import { toast } from "react-hot-toast";
-import axios from "axios";
+import { getTenantApiClient } from "../../lib/api/apiClient";
 import {
   ChevronLeft,
   ChevronRight,
@@ -24,13 +24,13 @@ const GalleryManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const apiClient = getTenantApiClient();
 
   // Fetch galleries
   const fetchGalleries = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/gallery`);
+      const response = await apiClient.get('/gallery');
       console.log("Fetched galleries data:", response.data);
       if (response.data.success) {
         setGalleries(response.data.data);

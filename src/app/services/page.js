@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { AlertCircle, CheckCircle, ChevronRight, Loader2, Calendar, Clock, ArrowRight } from 'lucide-react';
 import Container from '../../components/ui/Container';
 import PageHeader from '../../components/layout/PageHeader';
-import apiClient from '../../lib/api/apiClient';
+import { getTenantApiClient } from '../../lib/api/apiClient';
 import { useRouter } from 'next/navigation';
 import { useDashboard } from '../../contexts/DashboardContext';
+import { useTenant } from '../../contexts/TenantContext';
 
 export default function ServicesPage() {
   const [services, setServices] = useState([]);
@@ -15,6 +16,7 @@ export default function ServicesPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const router = useRouter();
   const { userData } = useDashboard();
+  const { tenant } = useTenant();
 
   const handleAuthAction = (path) => {
     if (userData) {
@@ -27,16 +29,19 @@ export default function ServicesPage() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        // Use public aggregate services endpoint so main domain shows all tenants
-        const response = await apiClient.get('/services/public');
+        setLoading(true);
+        const api = getTenantApiClient();
+        const endpoint = tenant ? '/services' : '/services/public';
+        const response = await api.get(endpoint);
         setServices(response.data.data);
-        setLoading(false);
       } catch (err) {
         setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
     fetchServices();
-  }, []);
+  }, [tenant]);
 
   // Get unique categories
   const categories = ['all', ...new Set(services.map(service => service.category || 'uncategorized').filter(Boolean))];

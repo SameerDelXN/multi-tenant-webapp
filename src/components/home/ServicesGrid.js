@@ -13,15 +13,18 @@ const ServicesGrid = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
-  const { getTenantApiClient, tenant } = useTenant();
+  const { getTenantApiClient, tenant, subdomain, isLoading: tenantLoading } = useTenant();
 
   useEffect(() => {
+    // Wait for tenant detection to complete to avoid fetching public on tenant domains
+    if (tenantLoading) return;
+
     const fetchServices = async () => {
       try {
         setLoading(true);
         const apiClient = getTenantApiClient();
-        // Tenant domain: fetch tenant-specific. Main domain: aggregate public
-        const endpoint = tenant ? '/services' : '/services/public';
+        // Use host signal (subdomain) to choose endpoint
+        const endpoint = subdomain ? '/services' : '/services/public';
         const response = await apiClient.get(endpoint);
         const data = response.data;
         console.log(data);
@@ -38,7 +41,7 @@ const ServicesGrid = () => {
     };
 
     fetchServices();
-  }, []);
+  }, [subdomain, tenantLoading]);
 
   const navigateToServiceDetail = (serviceId) => {
     router.push(`/services/${serviceId}`);
