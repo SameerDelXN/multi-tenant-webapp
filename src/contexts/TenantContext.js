@@ -39,7 +39,7 @@ export const TenantProvider = ({ children }) => {
     }
 
     // Handle production - superadmin domain
-    if (domain === 'www.landscape360.com' || domain === 'landscape360.com' || 
+    if (domain === 'www.landscape360.com' || domain === 'landscape360.com' || domain === "backend-rochin-landscaping-beta" || 
         domain === 'delxn.club' || domain === 'www.delxn.club' || domain === "https://backend-rochin-landscaping-beta.vercel.app" || domain === "www.backend-rochin-landscaping-beta.vercel.app" || domain === "backend-rochin-landscaping-beta.vercel.app") {
       return null; // Superadmin mode
     }
