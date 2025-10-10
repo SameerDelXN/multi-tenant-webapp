@@ -18,8 +18,10 @@ const ServicesGrid = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
+        setLoading(true);
         const apiClient = getTenantApiClient();
-        const response = await apiClient.get('/services');
+        // Use aggregate public services endpoint so main domain shows all tenants
+        const response = await apiClient.get('/services/public');
         const data = response.data;
         console.log(data);
         if (Array.isArray(data.data)) {

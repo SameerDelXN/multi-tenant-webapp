@@ -27,12 +27,12 @@ export default function ServicesPage() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await apiClient.get('/services');
+        // Use public aggregate services endpoint so main domain shows all tenants
+        const response = await apiClient.get('/services/public');
         setServices(response.data.data);
         setLoading(false);
       } catch (err) {
         setError(err.message);
-        setLoading(false);
       }
     };
     fetchServices();

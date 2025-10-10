@@ -222,7 +222,9 @@ export default function PortfolioPage() {
         setLoading(true);
         
         const apiClient = getTenantApiClient();
-        const response = await apiClient.get('/portfolio');
+        // Use tenant public on tenant domains; aggregate all on main domain
+        const endpoint = tenant ? '/portfolio/public' : '/portfolio/all';
+        const response = await apiClient.get(endpoint);
         
         if (response.data.success) {
           setPortfolios(response.data.data);
