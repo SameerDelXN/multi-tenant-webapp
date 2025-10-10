@@ -92,7 +92,7 @@ const extractTenantDomain = () => {
   }
   
   // Handle production - superadmin domain
-  if (domain === 'www.delxn.club' || domain === 'delxn.club') {
+  if (domain === 'www.delxn.club' || domain === 'delxn.club' || domain === "https://www.delxn.club") {
     return null; // Superadmin mode
   }
   
