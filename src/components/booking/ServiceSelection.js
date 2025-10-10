@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -9,7 +8,8 @@ import { useTenant } from '../../contexts/TenantContext';
 
 const ServiceSelection = ({ onNext }) => {
   const { currentBooking, updateCurrentBooking } = useStore();
-  const { getTenantApiClient } = useTenant();
+  const { getTenantApiClient, tenant } = useTenant();
+
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,18 +18,21 @@ const ServiceSelection = ({ onNext }) => {
   const fetchServices = async () => {
     try {
       const apiClient = getTenantApiClient();
-      const response = await apiClient.get('/services/public');
+      const endpoint = tenant ? '/services' : '/services/public';
+      const response = await apiClient.get(endpoint);
+
       setServices(response.data.data || []);
     } catch (error) {
       console.error("Failed to fetch services:", error);
     } finally {
       setLoading(false);
-    }
+{{ ... }}
   };
 
   useEffect(() => {
+    setLoading(true);
     fetchServices();
-  }, []);
+  }, [tenant]);
 
   // Handle URL parameters
   useEffect(() => {

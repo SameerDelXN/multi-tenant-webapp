@@ -13,15 +13,16 @@ const ServicesGrid = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
-  const { getTenantApiClient } = useTenant();
+  const { getTenantApiClient, tenant } = useTenant();
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
         setLoading(true);
         const apiClient = getTenantApiClient();
-        // Use aggregate public services endpoint so main domain shows all tenants
-        const response = await apiClient.get('/services/public');
+        // Tenant domain: fetch tenant-specific. Main domain: aggregate public
+        const endpoint = tenant ? '/services' : '/services/public';
+        const response = await apiClient.get(endpoint);
         const data = response.data;
         console.log(data);
         if (Array.isArray(data.data)) {
