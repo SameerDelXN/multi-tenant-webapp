@@ -25,28 +25,49 @@ export default function SignupPage() {
   const [tenantId, setTenantId] = useState(null);
   const [tenantLoading, setTenantLoading] = useState(true);
 
-  // Utility to extract subdomain from current host
-  const extractSubdomain = () => {
+    // Utility to extract tenant domain identifier from current host
+  // Handles:
+  // - tenant.example.com -> "tenant"
+  // - gardening1.info -> "gardening1.info"
+  // - gardening1:3000 -> "gardening1"
+  const extractTenantDomain = () => {
     if (typeof window === 'undefined') return null;
-    const host = window.location.hostname;
-    const parts = host.split('.');
-    if (parts[0] === 'www') parts.shift();
-    if (parts.length >= 3 || (parts.length === 2 && parts[1] === 'localhost')) {
+    const host = window.location.host; // may include port
+    let domain = host.split(':')[0].toLowerCase();
+
+    // Superadmin/main domains where no tenant context is needed
+    if (
+      domain === 'localhost' ||
+      domain === '127.0.0.1' ||
+      domain === 'delxn.club' ||
+      domain === 'www.delxn.club' ||
+      domain === 'landscape360.com' ||
+      domain === 'www.landscape360.com'
+    ) {
+      return null;
+    }
+
+    if (domain.startsWith('www.')) {
+      domain = domain.slice(4);
+    }
+
+    const parts = domain.split('.');
+    if (parts.length >= 3) {
       return parts[0];
     }
-    return null;
+    return domain;
   };
 
   useEffect(() => {
-    const subdomain = extractSubdomain();
-    if (!subdomain) {
+    const tenantDomain = extractTenantDomain();
+    if (!tenantDomain) {
       setTenantLoading(false);
       setTenantId(null);
       return;
     }
     fetch(`${API_URL}/tenant/info`, {
       headers: {
-        'x-tenant-subdomain': subdomain
+        'X-Tenant-Domain': tenantDomain
       }
     })
       .then(res => res.json())
@@ -105,8 +126,7 @@ export default function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!tenantId || tenantLoading) {
-      // Prevent submission if tenant info is not ready
+    if (tenantLoading) { // Wait until tenant resolution attempt completes
       return;
     }
 
@@ -115,12 +135,12 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const subdomain = extractSubdomain();
+      const tenantDomain = extractTenantDomain();
       const res = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(subdomain ? { 'x-tenant-subdomain': subdomain } : {})
+          ...(tenantDomain ? { 'X-Tenant-Domain': tenantDomain } : {})
         },
         body: JSON.stringify({
           name: formData.name,
@@ -338,7 +358,7 @@ export default function SignupPage() {
                   variant="primary"
                   fullWidth
                   isLoading={isLoading || tenantLoading}
-                  disabled={isLoading || tenantLoading || !tenantId}
+                  disabled={isLoading || tenantLoading}
                   className="mt-4 py-2.5 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-300"
                 >
                   {isLoading ? 'Creating Account...' : 'Claim Your 10% Discount Now'}
