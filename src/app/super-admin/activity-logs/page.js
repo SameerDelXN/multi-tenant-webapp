@@ -2,34 +2,16 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { ListFilter, Search, ChevronLeft, ChevronRight, Download } from 'lucide-react';
-
-// Placeholder data - replace with API calls
-const initialLogs = [
-  { id: 'log_001', timestamp: '2025-06-05 10:15:30 AM', adminUser: 'super.admin@example.com', action: 'Tenant Created', targetType: 'Tenant', targetId: 'tenant-003', details: 'Created new tenant: Evergreen Solutions', ipAddress: '192.168.1.101' },
-  { id: 'log_002', timestamp: '2025-06-05 09:30:00 AM', adminUser: 'super.admin@example.com', action: 'Setting Updated', targetType: 'Global Setting', targetId: 'PlatformTheme', details: 'Changed platform theme to Dark Mode', ipAddress: '192.168.1.101' },
-  { id: 'log_003', timestamp: '2025-06-04 05:20:10 PM', adminUser: 'jane.doe@example.com', action: 'Tenant Suspended', targetType: 'Tenant', targetId: 'tenant-002', details: 'Suspended tenant: Bloom & Grow Gardens due to payment failure', ipAddress: '203.0.113.45' },
-  { id: 'log_004', timestamp: '2025-06-04 02:00:00 PM', adminUser: 'super.admin@example.com', action: 'Plan Edited', targetType: 'Subscription Plan', targetId: 'plan_pro_monthly', details: 'Updated Pro Monthly plan price to $109', ipAddress: '192.168.1.101' },
-  { id: 'log_005', timestamp: '2025-06-03 11:00:00 AM', adminUser: 'john.smith@example.com', action: 'User Login', targetType: 'System', targetId: null, details: 'Admin user logged in successfully', ipAddress: '10.0.0.5' },
-  // Add more logs for pagination and filtering testing
-  ...
-Array(20).fill(null).map((_, i) => ({
-    id: `log_00${i + 6}`,
-    timestamp: `2025-06-${String(Math.floor(i/5) + 1).padStart(2, '0')} ${String(10 + i%5).padStart(2, '0')}:00:00 AM`,
-    adminUser: i % 2 === 0 ? 'super.admin@example.com' : 'jane.doe@example.com',
-    action: ['User Login', 'Tenant Updated', 'Setting Changed', 'Report Generated', 'User Logout'][i % 5],
-    targetType: ['System', 'Tenant', 'Global Setting', 'Report', 'System'][i % 5],
-    targetId: i % 5 === 1 ? `tenant-00${i%3 + 1}` : (i % 5 === 2 ? ['EmailConfig', 'PaymentGateway'][i%2] : null),
-    details: `Performed action: ${['User Login', 'Tenant Updated', 'Setting Changed', 'Report Generated', 'User Logout'][i % 5]} on ${['System', 'Tenant', 'Global Setting', 'Report', 'System'][i % 5]}`,
-    ipAddress: `192.168.1.${100 + i}`,
-}))
-].flat();
+import apiClient from '@/lib/api/apiClient';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminActivityLogsPage() {
-  const [logs, setLogs] = useState(initialLogs);
+  const [logs, setLogs] = useState([]);
   const [filters, setFilters] = useState({ searchTerm: '', adminUser: '', actionType: '', dateFrom: '', dateTo: '' });
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -37,44 +19,114 @@ export default function AdminActivityLogsPage() {
     setCurrentPage(1); // Reset to first page on filter change
   };
 
+  // Deterministic timestamp printer to avoid SSR/CSR mismatch
+  const formatTimestamp = (value) => {
+    if (!value) return '';
+    try {
+      const d = new Date(value);
+      // Use fixed locale and UTC to avoid timezone/locale differences between server and client
+      const fmt = new Intl.DateTimeFormat('en-GB', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'UTC'
+      });
+      return fmt.format(d);
+    } catch (_) {
+      return '';
+    }
+  };
+
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
-      const logDate = new Date(log.timestamp);
+      const ts = log.timestamp ? new Date(log.timestamp) : null;
       const dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : null;
       const dateTo = filters.dateTo ? new Date(filters.dateTo) : null;
 
-      return (
-        (filters.searchTerm === '' || 
-          log.adminUser.toLowerCase().includes(filters.searchTerm.toLowerCase()) || 
-          log.action.toLowerCase().includes(filters.searchTerm.toLowerCase()) || 
-          (log.targetId && log.targetId.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
-          log.details.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-          log.ipAddress.includes(filters.searchTerm)
-        ) &&
-        (filters.adminUser === '' || log.adminUser.toLowerCase().includes(filters.adminUser.toLowerCase())) &&
-        (filters.actionType === '' || log.action === filters.actionType) &&
-        (!dateFrom || logDate >= dateFrom) &&
-        (!dateTo || logDate <= new Date(dateTo.getTime() + 24 * 60 * 60 * 1000 -1)) // Include the whole 'dateTo' day
-      );
+      const adminEmail = log.userId?.email || '';
+      const action = log.type || '';
+      const targetId = log.tenantId?._id || '';
+      const details = log.message || '';
+      const ip = log.ipAddress || '';
+
+      const matchesSearch =
+        !filters.searchTerm ||
+        adminEmail.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        action.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        String(targetId).toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        details.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        ip.includes(filters.searchTerm);
+
+      const matchesAdmin =
+        !filters.adminUser || adminEmail.toLowerCase().includes(filters.adminUser.toLowerCase());
+
+      const matchesDate = (!dateFrom || (ts && ts >= dateFrom)) && (!dateTo || (ts && ts <= new Date(dateTo.getTime() + 24*60*60*1000 - 1)));
+
+      const matchesType = !filters.actionType || action === filters.actionType;
+
+      return matchesSearch && matchesAdmin && matchesDate && matchesType;
     });
   }, [logs, filters]);
 
-  const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
-  const paginatedLogs = filteredLogs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const uniqueAdminUsers = useMemo(() => [...new Set(logs.map(log => log.userId?.email || ''))].filter(Boolean), [logs]);
+  const uniqueActionTypes = useMemo(() => [...new Set(logs.map(log => log.type))], [logs]);
 
-  const uniqueAdminUsers = useMemo(() => [...new Set(logs.map(log => log.adminUser))], [logs]);
-  const uniqueActionTypes = useMemo(() => [...new Set(logs.map(log => log.action))], [logs]);
+  // Fetch logs from API whenever page/type/date filters change
+  useEffect(() => {
+    const run = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        params.set('page', String(currentPage));
+        params.set('limit', String(ITEMS_PER_PAGE));
+        if (filters.actionType) params.set('type', filters.actionType);
+        if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+        if (filters.dateTo) params.set('dateTo', filters.dateTo);
+        const { data } = await apiClient.get(`/super-admin/activity-logs?${params.toString()}`);
+        setLogs(Array.isArray(data.data) ? data.data : []);
+        setTotalPages(data.pagination?.pages || 1);
+      } catch (e) {
+        console.error('Failed to fetch activity logs:', e);
+        setLogs([]);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+  }, [currentPage, filters.actionType, filters.dateFrom, filters.dateTo]);
 
   const handleDownloadLogs = () => {
     // Basic CSV download functionality
     const headers = ['Timestamp', 'Admin User', 'Action', 'Target Type', 'Target ID', 'Details', 'IP Address'];
     const csvContent = [
       headers.join(','),
-      ...filteredLogs.map(log => 
-        [log.timestamp, log.adminUser, log.action, log.targetType, log.targetId || '', log.details.replace(/,/g, ';'), log.ipAddress].join(',')
+      ...filteredLogs.map(log =>
+        [
+          new Intl.DateTimeFormat('en-GB', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+            timeZone: 'UTC'
+          }).format(new Date(log.timestamp)),
+          log.userId?.email || '',
+          log.type || '',
+          log.tenantId ? 'Tenant' : (log.metadata?.targetType || ''),
+          log.tenantId?._id || log.metadata?.targetId || '',
+          (log.message || '').replace(/,/g, ';'),
+          log.ipAddress || ''
+        ].join(',')
       )
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.download !== undefined) {
@@ -86,7 +138,6 @@ export default function AdminActivityLogsPage() {
       link.click();
       document.body.removeChild(link);
     }
-    alert('Downloading logs (placeholder for actual download)');
   };
 
   return (
@@ -160,16 +211,16 @@ export default function AdminActivityLogsPage() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {paginatedLogs.length > 0 ? paginatedLogs.map((log) => (
+              {filteredLogs.length > 0 ? filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{log.timestamp}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{log.adminUser}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{log.action}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{formatTimestamp(log.timestamp)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{log.userId?.email || ''}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{log.type}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {log.targetType}{log.targetId && `: ${log.targetId}`}
+                    {log.tenantId ? `Tenant: ${log.tenantId?.name}` : (log.metadata?.targetType || '')}{(log.tenantId?._id || log.metadata?.targetId) ? `: ${log.tenantId?._id || log.metadata?.targetId}` : ''}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-300 max-w-xs truncate" title={log.details}>{log.details}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{log.ipAddress}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-300 max-w-xs truncate" title={log.message}>{log.message}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{log.ipAddress || ''}</td>
                 </tr>
               )) : (
                 <tr>

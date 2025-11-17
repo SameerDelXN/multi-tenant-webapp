@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { FaTimes } from 'react-icons/fa';
+import { useTenant } from '../../../../contexts/TenantContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function EditStaffModal({ staff, onClose, onSuccess }) {
+  const { getTenantApiClient } = useTenant();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,12 +42,8 @@ export default function EditStaffModal({ staff, onClose, onSuccess }) {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/professionals/${staff._id}`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const api = getTenantApiClient();
+      await api.put(`/professionals/${staff._id}`, formData);
 
       toast.success('Staff member updated successfully');
       onSuccess();

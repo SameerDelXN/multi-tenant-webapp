@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -38,7 +38,7 @@ export default function TenantManagementPage() {
       const response = await apiClient.get('/super-admin/tenants');
       setTenants(response.data.data || []);
     } catch (error) {
-      console.error('❌ Error fetching tenants:', error);
+      console.error('âŒ Error fetching tenants:', error);
       setError('Failed to load tenants');
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function TenantManagementPage() {
           : t
       ));
     } catch (error) {
-      console.error('❌ Error updating tenant status:', error);
+      console.error('âŒ Error updating tenant status:', error);
       alert('Failed to update tenant status');
     }
   };
@@ -122,7 +122,7 @@ export default function TenantManagementPage() {
           : t
       ));
     } catch (error) {
-      console.error('❌ Error updating subscription plan:', error);
+      console.error('âŒ Error updating subscription plan:', error);
       alert('Failed to update subscription plan');
     }
   };
@@ -133,7 +133,7 @@ export default function TenantManagementPage() {
       setTenants(tenants.filter(t => t._id !== tenantId));
       setDeleteModal({ open: false, tenant: null, input: '' });
     } catch (error) {
-      console.error('❌ Error deleting tenant:', error);
+      console.error('âŒ Error deleting tenant:', error);
       alert('Failed to delete tenant');
     }
   };
@@ -373,30 +373,55 @@ export default function TenantManagementPage() {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                       {/* Subdomain as clickable URL (strip www from main domain) */}
-                      {tenant.subdomain ? (() => {
-                        let mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN;
-                        if (mainDomain) {
-                          // Remove protocol and www if present
-                          mainDomain = mainDomain.replace(/^https?:\/\//, '').replace(/^www\./, '');
-                        } else if (typeof window !== 'undefined') {
-                          const hostParts = window.location.hostname.split('.');
-                          mainDomain = hostParts.slice(-2).join('.');
-                        } else {
-                          mainDomain = 'localhost:3000';
-                        }
-                        const url = `https://${tenant.subdomain}.${mainDomain}`;
-                        return (
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline dark:text-blue-400"
-                            title={`Go to ${url}`}
-                          >
-                            {tenant.subdomain}
-                          </a>
-                        );
-                      })() : 'N/A'}
+                      {(() => {
+  const normalizeHost = (d) => String(d).replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
+  const firstCustom = Array.isArray(tenant.customDomains) && tenant.customDomains.length > 0 ? normalizeHost(tenant.customDomains[0]) : null;
+  const explicitDomain = tenant.domain ? normalizeHost(tenant.domain) : null;
+  const websiteDomain = tenant.website ? normalizeHost(tenant.website) : null;
+
+  let displayHost = null;
+  let href = '#';
+
+  if (firstCustom) {
+    displayHost = firstCustom;
+    href = `https://${displayHost}`;
+  } else if (explicitDomain) {
+    displayHost = explicitDomain;
+    href = `https://${displayHost}`;
+  } else if (websiteDomain) {
+    displayHost = websiteDomain;
+    href = `https://${displayHost}`;
+  } else if (tenant.subdomain) {
+    let base = process.env.NEXT_PUBLIC_MAIN_DOMAIN || '';
+    if (base) base = normalizeHost(base).replace(/^www\./i, '');
+    if (!base && typeof window !== 'undefined') {
+      const hostParts = window.location.hostname.split('.');
+      base = hostParts.slice(-2).join('.');
+    }
+    if (!base) base = 'localhost:3000';
+    displayHost = `${tenant.subdomain}.${base}`;
+    href = `https://${displayHost}`;
+  }
+
+  return displayHost ? (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:underline dark:text-blue-400"
+      title={`Go to ${href}`}
+    >
+      {(() => {
+        try {
+          const parts = String(displayHost).split('.');
+          return parts[0] || displayHost;
+        } catch (_) {
+          return displayHost;
+        }
+      })()}
+    </a>
+  ) : 'N/A';
+})()}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
                       <StatusBadge status={tenant.subscription?.status} />

@@ -114,13 +114,25 @@ export const TenantProvider = ({ children }) => {
   // Get tenant-specific API client
   const getTenantApiClient = () => {
     if (!tenant?.subdomain) return apiClient;
-    
+
+    // Build headers with tenant info and auth token
+    const headers = {
+      'X-Tenant-Subdomain': tenant.subdomain,
+      'X-Tenant-Domain': extractTenant(),
+    };
+
+    // Attach JWT from storage (same keys used by apiClient and DashboardContext)
+    if (typeof window !== 'undefined') {
+      const token =
+        localStorage.getItem('authToken') ||
+        sessionStorage.getItem('authToken') ||
+        localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
+
     return axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
-      headers: {
-        'X-Tenant-Subdomain': tenant.subdomain,
-        'X-Tenant-Domain': extractTenant(),
-      },
+      headers,
     });
   };
 

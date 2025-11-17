@@ -32,28 +32,67 @@ const StatusBadge = ({ status }) => {
   // Convert to lowercase for comparison to ensure consistent behavior
   const statusLower = status ? status.toLowerCase() : "";
 
+  // switch (statusLower) {
+  //   case "pending":
+  //   case "pending-estimate":
+  //     bgColor = "bg-yellow-100";
+  //     textColor = "text-yellow-800";
+  //     break;
+  //   case "rescheduled":
+  //     bgColor = "bg-blue-100";
+  //     textColor = "text-blue-800";
+  //     break;
+  //   case "completed":
+  //     bgColor = "bg-green-100";
+  //     textColor = "text-green-800";
+  //     break;
+  //   case "cancelled":
+  //   case "canceled":
+  //     bgColor = "bg-red-100";
+  //     textColor = "text-red-800";
+  //     break;
+  //   default:
+  //     break;
+  // }
+
+
   switch (statusLower) {
-    case "pending":
-    case "pending-estimate":
-      bgColor = "bg-yellow-100";
-      textColor = "text-yellow-800";
-      break;
-    case "scheduled":
-      bgColor = "bg-blue-100";
-      textColor = "text-blue-800";
-      break;
-    case "completed":
-      bgColor = "bg-green-100";
-      textColor = "text-green-800";
-      break;
-    case "cancelled":
-    case "canceled":
-      bgColor = "bg-red-100";
-      textColor = "text-red-800";
-      break;
-    default:
-      break;
-  }
+  case "pending":
+  case "pending-estimate":
+    bgColor = "bg-yellow-100";
+    textColor = "text-yellow-800";
+    break;
+
+  case "rescheduled":
+    bgColor = "bg-blue-100";
+    textColor = "text-blue-800";
+    break;
+
+  case "completed":
+    bgColor = "bg-green-100";
+    textColor = "text-green-800";
+    break;
+
+  case "cancelled":
+  case "canceled":
+    bgColor = "bg-red-100";
+    textColor = "text-red-800";
+    break;
+
+  case "confirmed":   // NEW COLOR
+    bgColor = "bg-purple-100";
+    textColor = "text-purple-800";
+    break;
+
+  case "in progress": // NEW COLOR
+    bgColor = "bg-orange-100";
+    textColor = "text-orange-800";
+    break;
+
+  default:
+    break;
+}
+
 
 
   // Format the status for display
@@ -660,7 +699,9 @@ const AppointmentDetailsModal = ({ appointment, onClose, onUpdate }) => {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
                   >
                     <option value="Pending">Pending</option>
-                    <option value="Scheduled">Scheduled</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Rescheduled">Rescheduled</option>
                     <option value="Completed">Completed</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
@@ -1721,8 +1762,16 @@ const AppointmentsPage = () => {
             <span className="text-xs text-gray-600">Pending</span>
           </div>
           <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-gradient-to-r from-purple-400 to-purple-500"></div>
+            <span className="text-xs text-gray-600">Confirmed</span>
+          </div>
+           <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-gradient-to-r from-orange-400 to-orange-500"></div>
+            <span className="text-xs text-gray-600">In Progress </span>
+          </div>
+          <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-gradient-to-r from-blue-400 to-blue-500"></div>
-            <span className="text-xs text-gray-600">Scheduled</span>
+            <span className="text-xs text-gray-600">Rescheduled</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-gradient-to-r from-green-400 to-green-500"></div>
@@ -1945,126 +1994,163 @@ const AppointmentsPage = () => {
             </div>
           </div>
 
-          {/* Enhanced Filters */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="Search by customer, address, or service..."
-                value={searchTerm}
-                onChange={handleSearch}
-              />
-            </div>
+         {/* Enhanced Filters */}
+{/* Enhanced Filters */}
+<div className="space-y-4">
+  {/* First Line: Quick Status Filters */}
+  <div className="flex flex-wrap items-center justify-center gap-2">
+    <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Quick filters:</span>
+    
+    {/* All Button */}
+    <button
+      onClick={() => setStatusFilter('all')}
+      className={`px-3 py-1 text-xs rounded-full transition-colors whitespace-nowrap ${
+        statusFilter === 'all' 
+          ? 'bg-gray-800 text-white' 
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+      }`}
+    >
+      All
+    </button>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Quick Status Filters */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">Quick filters:</span>
-                <button
-                  onClick={() => setStatusFilter('all')}
-                  className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                    statusFilter === 'all' 
-                      ? 'bg-gray-800 text-white' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setStatusFilter('Pending')}
-                  className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                    statusFilter === 'Pending' 
-                      ? 'bg-yellow-500 text-white' 
-                      : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                  }`}
-                >
-                  Pending
-                </button>
-                <button
-                  onClick={() => setStatusFilter('Scheduled')}
-                  className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                    statusFilter === 'Scheduled' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                  }`}
-                >
-                  Scheduled
-                </button>
-                <button
-                  onClick={() => setStatusFilter('Completed')}
-                  className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                    statusFilter === 'Completed' 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-green-100 text-green-600 hover:bg-green-200'
-                  }`}
-                >
-                  Completed
-                </button>
-              </div>
+    {/* All 6 quick filter buttons */}
+    <button
+      onClick={() => setStatusFilter('Pending')}
+      className={`px-3 py-1 text-xs rounded-full transition-colors whitespace-nowrap ${
+        statusFilter === 'Pending' 
+          ? 'bg-yellow-500 text-white' 
+          : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+      }`}
+    >
+      Pending
+    </button>
+    <button
+      onClick={() => setStatusFilter('Confirmed')}
+      className={`px-3 py-1 text-xs rounded-full transition-colors whitespace-nowrap ${
+        statusFilter === 'Confirmed' 
+          ? 'bg-purple-500 text-white' 
+          : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+      }`}
+    >
+      Confirmed
+    </button>
+    <button
+      onClick={() => setStatusFilter('In Progress')}
+      className={`px-3 py-1 text-xs rounded-full transition-colors whitespace-nowrap ${
+        statusFilter === 'In Progress' 
+          ? 'bg-orange-500 text-white' 
+          : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+      }`}
+    >
+      In Progress
+    </button>
+    <button
+      onClick={() => setStatusFilter('Rescheduled')}
+      className={`px-3 py-1 text-xs rounded-full transition-colors whitespace-nowrap ${
+        statusFilter === 'Rescheduled' 
+          ? 'bg-blue-500 text-white' 
+          : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+      }`}
+    >
+      Rescheduled
+    </button>
+    <button
+      onClick={() => setStatusFilter('Completed')}
+      className={`px-3 py-1 text-xs rounded-full transition-colors whitespace-nowrap ${
+        statusFilter === 'Completed' 
+          ? 'bg-green-500 text-white' 
+          : 'bg-green-100 text-green-600 hover:bg-green-200'
+      }`}
+    >
+      Completed
+    </button>
+    <button
+      onClick={() => setStatusFilter('Cancelled')}
+      className={`px-3 py-1 text-xs rounded-full transition-colors whitespace-nowrap ${
+        statusFilter === 'Cancelled' 
+          ? 'bg-red-500 text-white' 
+          : 'bg-red-100 text-red-600 hover:bg-red-200'
+      }`}
+    >
+      Cancelled
+    </button>
 
-              {/* Dropdown Filters */}
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                {statuses.filter(s => s !== 'all').map((status) => (
-                  <option key={status} value={status}>
-                    {status.split('-').map(word => 
-                      word.charAt(0).toUpperCase() + word.slice(1)
-                    ).join(' ')}
-                  </option>
-                ))}
-              </select>
+    {/* Status Dropdown */}
+    <select
+      className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm whitespace-nowrap"
+      value={statusFilter}
+      onChange={(e) => setStatusFilter(e.target.value)}
+    >
+      <option value="all">All Statuses</option>
+      {statuses.filter(s => s !== 'all').map((status) => (
+        <option key={status} value={status}>
+          {status.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ')}
+        </option>
+      ))}
+    </select>
+  </div>
 
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
-                value={serviceFilter}
-                onChange={(e) => setServiceFilter(e.target.value)}
-              >
-                <option value="all">All Services</option>
-                {services.map((service) => (
-                  <option key={service._id} value={service._id}>
-                    {service.name}
-                  </option>
-                ))}
-              </select>
+  {/* Second Line: Search Bar (Full Width) */}
+  <div className="relative w-full">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+      </svg>
+    </div>
+    <input
+      type="text"
+      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+      placeholder="Search by customer, address, or service..."
+      value={searchTerm}
+      onChange={handleSearch}
+    />
+  </div>
 
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
-                value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
-              >
-                <option value="all">All Payments</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending Payment</option>
-              </select>
+  {/* Third Line: Other Filters */}
+  <div className="flex flex-wrap items-center justify-center gap-2">
+    <select
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm whitespace-nowrap"
+      value={serviceFilter}
+      onChange={(e) => setServiceFilter(e.target.value)}
+    >
+      <option value="all">All Services</option>
+      {services.map((service) => (
+        <option key={service._id} value={service._id}>
+          {service.name}
+        </option>
+      ))}
+    </select>
 
-              {/* Date Range Filters */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
-                  value={dateRange.start}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                />
-                <span className="text-gray-500">to</span>
-                <input
-                  type="date"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
-                  value={dateRange.end}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                />
-              </div>
-            </div>
-          </div>
+    <select
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm whitespace-nowrap"
+      value={paymentFilter}
+      onChange={(e) => setPaymentFilter(e.target.value)}
+    >
+      <option value="all">All Payments</option>
+      <option value="paid">Paid</option>
+      <option value="pending">Pending Payment</option>
+    </select>
+
+    {/* Date Range Filters */}
+    <div className="flex items-center gap-2">
+      <input
+        type="date"
+        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+        value={dateRange.start}
+        onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+      />
+      <span className="text-gray-500 whitespace-nowrap">to</span>
+      <input
+        type="date"
+        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+        value={dateRange.end}
+        onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+      />
+    </div>
+  </div>
+</div>
         </div>
 
         {viewType === "list" ? (
