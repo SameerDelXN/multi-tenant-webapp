@@ -69,6 +69,7 @@ export default function CreateNewTenantPage() {
     logo: null,
     brandingTheme: predefinedThemes[0].primary,
     enabledFeatures: [],
+    hostedDomain: '',
   });
   const [logoPreview, setLogoPreview] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -152,6 +153,9 @@ export default function CreateNewTenantPage() {
       form.append('subdomain', formData.subdomain);
       form.append('adminPassword', formData.adminPassword);
       form.append('plan', formData.planType);
+      if (formData.hostedDomain) {
+        form.append('domain', formData.hostedDomain);
+      }
       if (formData.logo) {
         form.append('logo', formData.logo);
       }
@@ -239,6 +243,7 @@ export default function CreateNewTenantPage() {
                   logo: null,
                   brandingTheme: predefinedThemes[0].primary,
                   enabledFeatures: [],
+                  hostedDomain: '',
                 });
                 setLogoPreview(null);
               }}
@@ -302,6 +307,14 @@ export default function CreateNewTenantPage() {
               autoComplete="tel"
             />
           </div>
+
+          <InputField 
+            label="Hosted Domain (optional)" 
+            name="hostedDomain" 
+            value={formData.hostedDomain} 
+            onChange={handleInputChange} 
+            placeholder="e.g., gardening1.info or www.grochin-gardening.shop"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField 

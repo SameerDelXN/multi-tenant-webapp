@@ -18,6 +18,7 @@ const EditTenantPage = () => {
     address: '',
     phone: '',
     website: '',
+    domain: '',
     subscription: { status: 'active', plan: 'basic' },
     settings: { businessHours: '', timezone: 'UTC' }
   });
@@ -39,6 +40,7 @@ const EditTenantPage = () => {
             address: tenantData.address || '',
             phone: tenantData.phone || '',
             website: tenantData.website || '',
+            domain: tenantData.domain || '',
             subscription: {
               status: tenantData.subscription?.status || 'active',
               plan: tenantData.subscription?.plan || 'basic'
@@ -166,6 +168,19 @@ const EditTenantPage = () => {
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
               placeholder="https://example.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="domain" className="block text-sm font-medium text-gray-700">Hosted Domain</label>
+            <input
+              type="text"
+              id="domain"
+              name="domain"
+              value={formData.domain}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+              placeholder="e.g., gardening1.info or www.grochin-gardening.shop"
             />
           </div>
 
