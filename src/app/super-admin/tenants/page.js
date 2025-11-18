@@ -375,24 +375,20 @@ export default function TenantManagementPage() {
                       {/* Subdomain as clickable URL (strip www from main domain) */}
                       {(() => {
   const normalizeHost = (d) => String(d).replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
-  const customDomainsArr = Array.isArray(tenant.customDomains) && tenant.customDomains.length > 0
-    ? tenant.customDomains
-    : (tenant.customDomain ? [tenant.customDomain] : []);
-  const firstCustom = customDomainsArr.length > 0 ? normalizeHost(customDomainsArr[0]) : null;
-  const explicitDomain = tenant.domain ? normalizeHost(tenant.domain) : (tenant.primaryDomain ? normalizeHost(tenant.primaryDomain) : null);
-  const websiteDomain = tenant.website ? normalizeHost(tenant.website) : null;
+  const candidates = [
+    ...(Array.isArray(tenant.customDomains) ? tenant.customDomains : []),
+    tenant.customDomain,
+    tenant.domain,
+    tenant.primaryDomain,
+    tenant.website,
+  ].filter(Boolean).map(normalizeHost);
+  const purchased = candidates.length > 0 ? candidates[0] : null;
 
   let displayHost = null;
   let href = '#';
 
-  if (firstCustom) {
-    displayHost = firstCustom;
-    href = `https://${displayHost}`;
-  } else if (explicitDomain) {
-    displayHost = explicitDomain;
-    href = `https://${displayHost}`;
-  } else if (websiteDomain) {
-    displayHost = websiteDomain;
+  if (purchased) {
+    displayHost = purchased;
     href = `https://${displayHost}`;
   } else if (tenant.subdomain) {
     // Dev: prefer subdomain:port (e.g., g1:3000). Prod: subdomain.<base>
@@ -429,14 +425,7 @@ export default function TenantManagementPage() {
       className="text-blue-600 hover:underline dark:text-blue-400"
       title={`Go to ${href}`}
     >
-      {(() => {
-        try {
-          const parts = String(displayHost).split('.');
-          return parts[0] || displayHost;
-        } catch (_) {
-          return displayHost;
-        }
-      })()}
+      {displayHost}
     </a>
   ) : 'N/A';
 })()}
