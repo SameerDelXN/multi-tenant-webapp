@@ -1327,7 +1327,7 @@ const DateAppointmentsModal = ({
                           : "Assign Crew"}
                       </button>
 
-                      <button
+                      {/* <button
                         onClick={() => {
                           setSelectedAppointment(appointment);
                           setActiveModal("payment");
@@ -1335,7 +1335,7 @@ const DateAppointmentsModal = ({
                         className="text-purple-600 hover:text-purple-900"
                       >
                         Payment
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 </div>
@@ -2276,7 +2276,7 @@ const AppointmentsPage = () => {
                                   {appointment.crew?.assignedTo?.length > 0 ? "Crew" : "Assign"}
                                 </button>
                                 
-                                <button
+                                {/* <button
                                   onClick={() => {
                                     setSelectedAppointment(appointment);
                                     setActiveModal("payment");
@@ -2284,7 +2284,7 @@ const AppointmentsPage = () => {
                                   className="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 hover:bg-purple-200"
                                 >
                                   Payment
-                                </button>
+                                </button> */}
                               </div>
                             )}
                           </div>

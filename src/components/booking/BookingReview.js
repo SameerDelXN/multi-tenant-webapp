@@ -269,6 +269,8 @@ const BookingReview = ({ onBack }) => {
         },
         notes: currentBooking.notes,
         frequency: currentBooking.frequency,
+        // Pass address so backend can update customer record from booking
+        address: currentBooking.address || {}
       };
 
       const response = await apiClient.post('/appointments', appointmentData);

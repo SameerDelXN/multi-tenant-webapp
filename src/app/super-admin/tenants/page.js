@@ -392,15 +392,30 @@ export default function TenantManagementPage() {
     displayHost = websiteDomain;
     href = `https://${displayHost}`;
   } else if (tenant.subdomain) {
-    let base = process.env.NEXT_PUBLIC_MAIN_DOMAIN || '';
-    if (base) base = normalizeHost(base).replace(/^www\./i, '');
-    if (!base && typeof window !== 'undefined') {
-      const hostParts = window.location.hostname.split('.');
-      base = hostParts.slice(-2).join('.');
+    // Dev: prefer subdomain:port (e.g., g1:3000). Prod: subdomain.<base>
+    if (typeof window !== 'undefined') {
+      const currentHost = window.location.host; // may include port
+      const hostWithoutPort = currentHost.split(':')[0];
+      const port = (currentHost.includes(':') ? currentHost.split(':')[1] : '') || '3000';
+      const isLocal = hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1' || !hostWithoutPort.includes('.');
+      if (isLocal) {
+        displayHost = `${tenant.subdomain}:${port}`;
+        href = `http://${displayHost}`;
+      } else {
+        let base = process.env.NEXT_PUBLIC_MAIN_DOMAIN || '';
+        if (base) base = normalizeHost(base).replace(/^www\./i, '');
+        if (!base) {
+          const parts = hostWithoutPort.split('.');
+          base = parts.slice(-2).join('.');
+        }
+        displayHost = `${tenant.subdomain}.${base}`;
+        href = `https://${displayHost}`;
+      }
+    } else {
+      // SSR fallback (dev): prefer subdomain:3000
+      displayHost = `${tenant.subdomain}:3000`;
+      href = `http://${displayHost}`;
     }
-    if (!base) base = 'localhost:3000';
-    displayHost = `${tenant.subdomain}.${base}`;
-    href = `https://${displayHost}`;
   }
 
   return displayHost ? (

@@ -154,7 +154,7 @@ export default function DashboardStats() {
           title="View System Logs"
           description="Monitor system activity and errors"
           icon="📋"
-          onClick={() => window.location.href = '/super-admin/logs'}
+          onClick={() => window.location.href = '/super-admin/activity-logs'}
           color="blue"
         />
         <QuickAction

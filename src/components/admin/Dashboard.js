@@ -8,6 +8,58 @@ import Button from '../ui/Button';
 import apiClient from '../../lib/api/apiClient';
 import { useDashboard } from '../../contexts/DashboardContext';
 
+
+// Helper functions - moved to top level so both components can use them
+const formatAddress = (address) => {
+  if (!address) return 'No address';
+  
+  // If address is already a string, return it
+  if (typeof address === 'string') return address;
+  
+  // If address is an object, format it
+  if (typeof address === 'object') {
+    const parts = [
+      address.street,
+      address.city,
+      address.state,
+      address.zipCode,
+      address.country
+    ].filter(part => part && part.trim() !== '');
+    
+    return parts.join(', ') || 'Address not specified';
+  }
+  
+  return 'Invalid address format';
+};
+
+const getStatusColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case 'scheduled':
+    case 'confirmed':
+      return 'bg-blue-100 text-blue-800';
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'in progress':
+      return 'bg-orange-100 text-orange-800';
+    case 'completed':
+      return 'bg-green-100 text-green-800';
+    case 'cancelled':
+    case 'canceled':
+      return 'bg-red-100 text-red-800';
+    case 'rescheduled':
+      return 'bg-purple-100 text-purple-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const formatStatus = (status) => {
+  if (!status) return 'Unknown';
+  return status.split('-').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+};
+
 const ActivityLog = ({ activities }) => {
   return (
     <div className="flow-root">
@@ -82,60 +134,325 @@ const CalendarOverview = ({ appointments }) => {
     }
   }).filter(Boolean); // Remove any null entries from invalid appointments
 
-  // Filter and sort appointments
+  
+
+  // Filter and sort appointments - REMOVED status filter to show all upcoming appointments
   const now = new Date();
   const upcomingAppointments = processedAppointments
-    .filter(a => a.status === 'Scheduled' && a.fullDateTime > now)
+    .filter(a => a.fullDateTime > now) // Only filter by date, not status
     .sort((a, b) => a.fullDateTime - b.fullDateTime)
-    .slice(0, 5); // Limit to 5 upcoming appointments
+    .slice(0, 10); // Increased limit to 10 to show more appointments
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="p-4 bg-green-50 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">Upcoming Appointments</h3>
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium text-gray-900">Upcoming Appointments</h3>
+          <span className="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+            {upcomingAppointments.length} upcoming
+          </span>
+        </div>
       </div>
+      
       {upcomingAppointments.length === 0 ? (
-        <div className="p-4 text-gray-500 text-center">No upcoming appointments</div>
+        <div className="p-8 text-center">
+          <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h4 className="text-lg font-medium text-gray-900 mb-2">No Upcoming Appointments</h4>
+          <p className="text-gray-500 mb-4">You're all caught up! No appointments scheduled for the future.</p>
+          <Link href="/admin/appointments/new">
+            <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+              Schedule New Appointment
+            </button>
+          </Link>
+        </div>
       ) : (
-        <ul className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-200">
           {upcomingAppointments.map((appointment) => (
-            <li key={appointment._id} className="p-4 hover:bg-gray-50">
+            <div key={appointment._id} className="p-4 hover:bg-gray-50 transition-colors">
               <Link href={`/admin/appointments/${appointment._id}`} className="block">
-                <div className="flex flex-col sm:flex-row sm:justify-between">
-                  <p className="text-sm font-medium text-gray-900 mb-1 sm:mb-0">
-                    {appointment.customer?.user?.name || 'Unknown Customer'}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {appointment.fullDateTime.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </p>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                  {/* Left Section - Customer and Service Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {appointment.customer?.user?.name || appointment.customerName || 'Unknown Customer'}
+                      </h4>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
+                        {formatStatus(appointment.status)}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span>{appointment.service?.name || appointment.serviceName || 'Unknown Service'}</span>
+                      </div>
+                      
+                      {/* <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="truncate">
+                          {formatAddress(appointment.customer?.address || appointment.address)}
+                        </span>
+                      </div> */}
+                    </div>
+                  </div>
+
+                  {/* Right Section - Date, Time and Payment */}
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">
+                        {appointment.fullDateTime.toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime}
+                      </p>
+                    </div>
+                    
+                    {/* Payment Status */}
+                    {appointment.payment && (
+                      <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        appointment.payment.status?.toLowerCase() === 'paid' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+                        </svg>
+                        {appointment.payment.status || 'Pending'} • ${appointment.payment.amount || '0.00'}
+                      </div>
+                    )}
+                    
+                    {/* Crew Assignment */}
+                    {appointment.crew && (
+                      <div className="text-xs text-gray-500">
+                        {appointment.crew.assignedTo?.length > 0 
+                          ? `${appointment.crew.assignedTo.length} crew assigned`
+                          : 'No crew assigned'
+                        }
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-2 flex flex-col sm:flex-row sm:justify-between">
-                  <p className="text-sm text-gray-500">
-                    {appointment.service?.name || 'Unknown Service'}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime}
-                  </p>
-                </div>
+
+                {/* Notes Preview */}
+                {appointment.notes?.internal && (
+                  <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                    <p className="text-xs text-blue-700 line-clamp-2">
+                      <span className="font-medium">Notes:</span> {appointment.notes.internal}
+                    </p>
+                  </div>
+                )}
               </Link>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
-      <div className="bg-gray-50 px-4 py-3 text-right">
-        <Link href="/admin/appointments" className="text-sm font-medium text-green-600 hover:text-green-500">
-          View all appointments &rarr;
-        </Link>
+      
+      {/* View All Link */}
+      <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-500">
+            Showing {upcomingAppointments.length} upcoming appointments
+          </span>
+          <Link href="/admin/appointments" className="text-sm font-medium text-green-600 hover:text-green-500 flex items-center gap-1">
+            View all appointments
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
       </div>
     </div>
   );
 };
 
+// Previous Appointments Component
+const PreviousAppointments = ({ appointments }) => {
+  // Process appointments to include full datetime
+  const processedAppointments = appointments.map(appointment => {
+    if (!appointment?.date || !appointment?.timeSlot?.startTime) {
+      console.warn("Invalid appointment data:", appointment);
+      return null;
+    }
+
+    try {
+      // Create date object from appointment date string
+      const appointmentDate = new Date(appointment.date);
+      
+      // Parse time string (handle both "HH:MM" and "HH:MM:SS" formats)
+      const timeString = appointment.timeSlot.startTime;
+      const timeParts = timeString.match(/(\d+):(\d+)(?::\d+)?/);
+      if (!timeParts) {
+        console.warn("Could not parse time:", timeString);
+        return null;
+      }
+
+      const hours = parseInt(timeParts[1], 10);
+      const minutes = parseInt(timeParts[2], 10);
+
+      // Set hours and minutes on the date object
+      appointmentDate.setHours(hours, minutes, 0, 0);
+
+      return {
+        ...appointment,
+        fullDateTime: appointmentDate
+      };
+    } catch (error) {
+      console.error("Error processing appointment:", appointment, error);
+      return null;
+    }
+  }).filter(Boolean);
+
+  // Filter and sort previous appointments (past appointments)
+  const now = new Date();
+  const previousAppointments = processedAppointments
+    .filter(a => a.fullDateTime <= now) // Past appointments
+    .sort((a, b) => b.fullDateTime - a.fullDateTime) // Most recent first
+    .slice(0, 10); // Limit to 10 most recent
+
+  return (
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="p-4 bg-blue-50 border-b border-gray-200">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium text-gray-900">Previous Appointments</h3>
+          <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+            {previousAppointments.length} previous
+          </span>
+        </div>
+      </div>
+      
+      {previousAppointments.length === 0 ? (
+        <div className="p-8 text-center">
+          <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h4 className="text-lg font-medium text-gray-900 mb-2">No Previous Appointments</h4>
+          <p className="text-gray-500 mb-4">No appointments have been completed or occurred in the past.</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-200">
+          {previousAppointments.map((appointment) => (
+            <div key={appointment._id} className="p-4 hover:bg-gray-50 transition-colors">
+              <Link href={`/admin/appointments/${appointment._id}`} className="block">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                  {/* Left Section - Customer and Service Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {appointment.customer?.user?.name || appointment.customerName || 'Unknown Customer'}
+                      </h4>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
+                        {formatStatus(appointment.status)}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span>{appointment.service?.name || appointment.serviceName || 'Unknown Service'}</span>
+                      </div>
+                      
+                      {/* <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="truncate">
+                          {formatAddress(appointment.customer?.address || appointment.address)}
+                        </span>
+                      </div> */}
+                    </div>
+                  </div>
+
+                  {/* Right Section - Date, Time and Payment */}
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">
+                        {appointment.fullDateTime.toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime}
+                      </p>
+                    </div>
+                    
+                    {/* Payment Status */}
+                    {appointment.payment && (
+                      <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        appointment.payment.status?.toLowerCase() === 'paid' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+                        </svg>
+                        {appointment.payment.status || 'Pending'} • ${appointment.payment.amount || '0.00'}
+                      </div>
+                    )}
+                    
+                    {/* Completion Badge for Completed Appointments */}
+                    {appointment.status?.toLowerCase() === 'completed' && (
+                      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Completed
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Notes Preview */}
+                {appointment.notes?.internal && (
+                  <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                    <p className="text-xs text-blue-700 line-clamp-2">
+                      <span className="font-medium">Notes:</span> {appointment.notes.internal}
+                    </p>
+                  </div>
+                )}
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* View All Link */}
+      <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-500">
+            Showing {previousAppointments.length} previous appointments
+          </span>
+          <Link href="/admin/appointments" className="text-sm font-medium text-blue-600 hover:text-blue-500 flex items-center gap-1">
+            View all appointments
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
 const StatusPieChart = ({ data }) => {
   const colors = {
     'Scheduled': '#10B981',
@@ -764,9 +1081,15 @@ const Dashboard = () => {
         </div> */}
 
         {/* Upcoming Appointments */}
-        <div className="mb-6">
-          <CalendarOverview appointments={appointmentData} />
-        </div>
+        {/* Appointments Section - Both Upcoming and Previous */}
+{/* Appointments Section - Previous then Upcoming */}
+<div className="space-y-6 mb-8">
+  {/* Previous Appointments */}
+  <PreviousAppointments appointments={appointmentData} />
+  
+  {/* Upcoming Appointments */}
+  <CalendarOverview appointments={appointmentData} />
+</div>
       </main>
     </div>
   );

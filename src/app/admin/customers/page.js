@@ -368,9 +368,17 @@ const CustomersPage = () => {
                       {customer.user?.phone || "N/A"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                      {customer.address
-                        ? `${customer.address?.street}, ${customer.address?.city}, ${customer.address?.state} ${customer.address?.zipCode}, ${customer.address?.country}`
-                        : "N/A"}
+                      {(() => {
+                        const a = customer.address || {};
+                        const street = a.street || '';
+                        const city = a.city || '';
+                        const state = a.state || '';
+                        const zip = a.zipCode || '';
+                        const country = a.country || '';
+                        const cityStateZip = [city, state, zip].filter(Boolean).join(', ');
+                        const parts = [street, cityStateZip, country].filter(Boolean);
+                        return parts.length ? parts.join(', ') : 'N/A';
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-4">

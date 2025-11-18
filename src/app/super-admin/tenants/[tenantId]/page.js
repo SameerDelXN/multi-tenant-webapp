@@ -339,7 +339,7 @@ export default function TenantDetailPage() {
             {/* {tenant.logoUrl && <img src={tenant.logoUrl} alt={`${tenant.name} logo`} className="w-16 h-16 rounded-md mr-4 bg-gray-200 dark:bg-gray-700 object-contain"/>} */}
             <div>
               <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{tenant.name}</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">ID: {tenant._id}</p>
+              {/* <p className="text-sm text-gray-500 dark:text-gray-400">ID: {tenant._id}</p> */}
             </div>
           </div>
         </div>
