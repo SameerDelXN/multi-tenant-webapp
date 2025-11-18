@@ -375,6 +375,7 @@ export default function TenantManagementPage() {
                       {/* Subdomain as clickable URL (strip www from main domain) */}
                       {(() => {
   const normalizeHost = (d) => String(d).replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
+  const hostFromBackend = tenant.host ? normalizeHost(tenant.host) : null;
   const firstCustom = Array.isArray(tenant.customDomains) && tenant.customDomains.length > 0 ? normalizeHost(tenant.customDomains[0]) : null;
   const explicitDomain = tenant.domain ? normalizeHost(tenant.domain) : null;
   const websiteDomain = tenant.website ? normalizeHost(tenant.website) : null;
@@ -382,7 +383,10 @@ export default function TenantManagementPage() {
   let displayHost = null;
   let href = '#';
 
-  if (firstCustom) {
+  if (hostFromBackend) {
+    displayHost = hostFromBackend;
+    href = `https://${displayHost}`;
+  } else if (firstCustom) {
     displayHost = firstCustom;
     href = `https://${displayHost}`;
   } else if (explicitDomain) {
