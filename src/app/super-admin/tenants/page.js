@@ -375,8 +375,11 @@ export default function TenantManagementPage() {
                       {/* Subdomain as clickable URL (strip www from main domain) */}
                       {(() => {
   const normalizeHost = (d) => String(d).replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
-  const firstCustom = Array.isArray(tenant.customDomains) && tenant.customDomains.length > 0 ? normalizeHost(tenant.customDomains[0]) : null;
-  const explicitDomain = tenant.domain ? normalizeHost(tenant.domain) : null;
+  const customDomainsArr = Array.isArray(tenant.customDomains) && tenant.customDomains.length > 0
+    ? tenant.customDomains
+    : (tenant.customDomain ? [tenant.customDomain] : []);
+  const firstCustom = customDomainsArr.length > 0 ? normalizeHost(customDomainsArr[0]) : null;
+  const explicitDomain = tenant.domain ? normalizeHost(tenant.domain) : (tenant.primaryDomain ? normalizeHost(tenant.primaryDomain) : null);
   const websiteDomain = tenant.website ? normalizeHost(tenant.website) : null;
 
   let displayHost = null;
