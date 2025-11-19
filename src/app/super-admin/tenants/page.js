@@ -35,6 +35,11 @@ export default function TenantManagementPage() {
     try {
       setLoading(true);
       setError(null);
+      const token = (typeof window !== 'undefined') && (localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || localStorage.getItem('token'));
+      if (!token) {
+        router.push('/login?redirect=/super-admin/tenants');
+        return;
+      }
       const response = await apiClient.get('/super-admin/tenants');
       setTenants(response.data.data || []);
     } catch (error) {

@@ -31,25 +31,34 @@ const SuperAdminDashboard = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [statsRes, tenantsRes] = await Promise.all([
-          apiClient.get('/super-admin/dashboard-stats'),
-          apiClient.get('/super-admin/tenants?limit=5')
-        ]);
-        setStats(statsRes.data.data);
-        setTenants(tenantsRes.data.data || []);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsRes, tenantsRes] = await Promise.all([
+        apiClient.get('/super-admin/dashboard-stats'),
+        apiClient.get('/super-admin/tenants?limit=5')
+      ]);
+      setStats(statsRes.data.data);
+      setTenants(tenantsRes.data.data || []);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDashboardData();
+    const id = setInterval(fetchDashboardData, 30000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') fetchDashboardData();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
   const handleDeleteTenant = async (tenantId) => {
@@ -82,9 +91,14 @@ const SuperAdminDashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Super Admin Dashboard</h1>
           <p className="text-gray-600 dark:text-gray-400">Welcome back, {userData?.name}!</p>
         </div>
-        <Link href="/super-admin/tenants/new" className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
-          Create New Tenant
-        </Link>
+        <div className="flex gap-2">
+          <button onClick={fetchDashboardData} className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium py-2 px-4 rounded-lg">
+            Refresh
+          </button>
+          <Link href="/super-admin/tenants/new" className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+            Create New Tenant
+          </Link>
+        </div>
       </div>
 
       {stats && (
