@@ -396,7 +396,7 @@ export default function TenantManagementPage() {
     displayHost = websiteDomain;
     href = `https://${displayHost}`;
   } else if (tenant.subdomain) {
-    // Dev: prefer subdomain:port (e.g., g1:3000). Prod: subdomain.<base>
+    // Dev: prefer subdomain:port (e.g., g1:3000). Prod: require hosted domain configured; otherwise N/A
     if (typeof window !== 'undefined') {
       const currentHost = window.location.host; // may include port
       const hostWithoutPort = currentHost.split(':')[0];
@@ -406,19 +406,14 @@ export default function TenantManagementPage() {
         displayHost = `${tenant.subdomain}:${port}`;
         href = `http://${displayHost}`;
       } else {
-        let base = process.env.NEXT_PUBLIC_MAIN_DOMAIN || '';
-        if (base) base = normalizeHost(base).replace(/^www\./i, '');
-        if (!base) {
-          const parts = hostWithoutPort.split('.');
-          base = parts.slice(-2).join('.');
-        }
-        displayHost = `${tenant.subdomain}.${base}`;
-        href = `https://${displayHost}`;
+        // In production, do not fall back to subdomain.<base>; show as not configured
+        displayHost = null;
+        href = '#';
       }
     } else {
-      // SSR fallback (dev): prefer subdomain:3000
-      displayHost = `${tenant.subdomain}:3000`;
-      href = `http://${displayHost}`;
+      // SSR fallback (dev): prefer subdomain:3000; otherwise N/A for prod
+      displayHost = process.env.NODE_ENV === 'development' ? `${tenant.subdomain}:3000` : null;
+      href = displayHost ? `http://${displayHost}` : '#';
     }
   }
 
