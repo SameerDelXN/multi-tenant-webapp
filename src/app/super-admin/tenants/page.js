@@ -430,14 +430,7 @@ export default function TenantManagementPage() {
       className="text-blue-600 hover:underline dark:text-blue-400"
       title={`Go to ${href}`}
     >
-      {(() => {
-        try {
-          const parts = String(displayHost).split('.');
-          return parts[0] || displayHost;
-        } catch (_) {
-          return displayHost;
-        }
-      })()}
+      {displayHost}
     </a>
   ) : 'N/A';
 })()}
