@@ -1088,6 +1088,22 @@ export default function TenantHeader() {
     }
   };
 
+
+// const handleBookNowClick = (e) => {
+//   e.preventDefault();
+//   const token = userData?.token;
+//   const role = userData?.role || '';
+  
+//   // Allow both customers and tenantAdmin to book now
+//   if (token && (role === 'customer' || role === 'tenantAdmin')) {
+//     router.push('/services');
+//   } else {
+//     router.push('/login?redirect=/booking');
+//   }
+// };
+
+
+
   // Enhanced Google Translate language change with error handling
   // CORRECT language change function
   const changeLanguage = (langCode) => {
