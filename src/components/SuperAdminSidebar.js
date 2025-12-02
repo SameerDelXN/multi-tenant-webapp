@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 const navItems = [
   { href: '/super-admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/super-admin/tenants', label: 'Tenant Management', icon: Users },
-  { href: '/super-admin/users', label: 'Users', icon: Users },
+  // { href: '/super-admin/users', label: 'Users', icon: Users },
   { href: '/super-admin/billing', label: 'Billing', icon: FileText },
   { href: '/super-admin/subscriptions/plans', label: 'Subscription Plans', icon: FileText },
   { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: BarChart3 },
