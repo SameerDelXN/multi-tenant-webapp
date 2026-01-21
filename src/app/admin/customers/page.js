@@ -190,11 +190,11 @@ const CustomersPage = () => {
           <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600 mt-1">Manage your customer database</p>
         </div>
-        <div className="mt-4 sm:mt-0 flex space-x-2">
+        {/* <div className="mt-4 sm:mt-0 flex space-x-2">
           <Link href="/admin/customers/new">
             <Button variant="primary">Add Customer</Button>
           </Link>
-        </div>
+        </div> */}
       </div>
 
       {/* Search */}

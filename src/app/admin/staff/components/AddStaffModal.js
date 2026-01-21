@@ -49,10 +49,18 @@ export default function AddStaffModal({ onClose, onSuccess }) {
 
     try {
       const token = userData.token;
-      const staffData = {
-        ...formData,
-        tenantId: userData.tenantId._id
-      };
+// Normalize and validate phone number to exactly 10 digits
+const normalizedPhone = (formData.phone || '').replace(/\D/g, '');
+if (normalizedPhone.length !== 10) {
+  toast.error('Please enter a valid 10-digit mobile number');
+  setLoading(false);
+  return;
+}
+const staffData = {
+  ...formData,
+  phone: normalizedPhone,
+  tenantId: userData.tenantId._id
+};
       
       await apiClient.post('/auth/register', staffData);
 
@@ -106,13 +114,17 @@ export default function AddStaffModal({ onClose, onSuccess }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Phone</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
+           <input
+  type="tel"
+  name="phone"
+  value={formData.phone}
+  onChange={handleChange}
+  inputMode="numeric"
+  pattern="\d{10}"
+  placeholder="10-digit mobile number"
+  required
+  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+/>
           </div>
 
           <div>
@@ -131,14 +143,13 @@ export default function AddStaffModal({ onClose, onSuccess }) {
           <div>
             <label className="block text-sm font-medium text-gray-700">Role</label>
             <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="staff">Staff</option>
-              <option value="tenantAdmin">Tenant Admin</option>
-            </select>
+  name="role"
+  value={formData.role}
+  onChange={handleChange}
+  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+>
+  <option value="staff">Staff</option>
+</select>
           </div>
 
           <div className="flex justify-end space-x-3 mt-6">
