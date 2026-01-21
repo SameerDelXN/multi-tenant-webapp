@@ -254,12 +254,12 @@ const AppointmentDetailPage = () => {
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Crew Assignment</h3>
                   <div className="space-y-3">
-                    <div>
+                    {/* <div>
                       <label className="text-sm font-medium text-gray-500">Lead Professional</label>
                       <p className="text-gray-900">
                         {appointment.crew?.leadProfessional?.name || 'Not assigned'}
                       </p>
-                    </div>
+                    </div> */}
                     <div>
                       <label className="text-sm font-medium text-gray-500">Team Members</label>
                       <div className="text-gray-900">

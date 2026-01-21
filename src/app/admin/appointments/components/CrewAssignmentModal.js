@@ -36,8 +36,13 @@ const CrewAssignmentModal = ({ appointment, onClose, onUpdate }) => {
         setLoading(true);
         
         // Get all staff members
+        // const staffResponse = await apiClient.get('/users/staff');
+        // setProfessionals(staffResponse.data.data);
         const staffResponse = await apiClient.get('/users/staff');
-        setProfessionals(staffResponse.data.data);
+const list = staffResponse.data.data || [];
+const allowedRoles = ['staff', 'professional', 'technician', 'crew']; // adjust if your role names differ
+const filtered = list.filter(u => allowedRoles.includes((u.role || '').toLowerCase()));
+setProfessionals(filtered);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error(error.response?.data?.error || 'Failed to fetch professionals');
@@ -152,7 +157,10 @@ const CrewAssignmentModal = ({ appointment, onClose, onUpdate }) => {
       <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
-            {appointment.crew?.leadProfessional ? 'Update Crew' : 'Assign Crew'}
+            {/* {appointment.crew?.leadProfessional ? 'Update Crew' : 'Assign Crew'} */}
+          {((appointment.crew?.assignedTo?.length || 0) > 0 || (crewAssignment.assignedTo?.length || 0) > 0)
+  ? 'View/Update Crew'
+  : 'Assign Crew'}
           </h2>
           <button 
             onClick={onClose} 
@@ -174,7 +182,7 @@ const CrewAssignmentModal = ({ appointment, onClose, onUpdate }) => {
           <p>Loading professionals...</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Lead Professional *
               </label>
@@ -195,7 +203,26 @@ const CrewAssignmentModal = ({ appointment, onClose, onUpdate }) => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
+
+
+            {(crewAssignment.assignedTo?.length || 0) > 0 && (
+  <div className="rounded border p-2 bg-green-50">
+    <div className="text-sm font-medium text-green-800">Assigned Members</div>
+    <div className="mt-1 flex flex-wrap gap-2">
+      {professionals
+        .filter(p => crewAssignment.assignedTo.includes(p._id))
+        .map(p => (
+          <span
+            key={p._id}
+            className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded"
+          >
+            {p.name}
+          </span>
+        ))}
+    </div>
+  </div>
+)}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -218,13 +245,23 @@ const CrewAssignmentModal = ({ appointment, onClose, onUpdate }) => {
                           professional._id === crewAssignment.leadProfessional
                         }
                       />
-                      <label 
+                      {/* <label 
                         htmlFor={`member-${professional._id}`} 
                         className="ml-2 block text-sm text-gray-700"
                       >
                         {professional.name} ({professional.role || 'Staff'})
                         {professional._id === crewAssignment.leadProfessional && ' (lead)'}
-                      </label>
+                      </label> */}
+
+                      <label htmlFor={`member-${professional._id}`} className="ml-2 block text-sm text-gray-700">
+  {professional.name} ({professional.role || 'Staff'})
+  {professional._id === crewAssignment.leadProfessional && ' (lead)'}
+  {crewAssignment.assignedTo.includes(professional._id) && (
+    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-800 rounded">
+      Assigned
+    </span>
+  )}
+</label>
                     </div>
                   ))
                 )}
@@ -243,7 +280,13 @@ const CrewAssignmentModal = ({ appointment, onClose, onUpdate }) => {
               <button
                 type="submit"
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
-                disabled={!crewAssignment.leadProfessional || submitting || !appointmentId}
+                // disabled={!crewAssignment.leadProfessional || submitting || !appointmentId}
+
+                disabled={
+  submitting ||
+  !appointmentId ||
+  (crewAssignment.assignedTo?.length || 0) === 0
+}
               >
                 {submitting ? 'Saving...' : 'Save Assignment'}
               </button>

@@ -1311,15 +1311,30 @@ const DateAppointmentsModal = ({
 
                       <button
                         onClick={() => {
+                          const statusLower = appointment.status?.toLowerCase?.() || "";
+                          const canAssign = [
+                            "pending",
+                            "scheduled",
+                            "confirmed",
+                            "rescheduled",
+                          ].includes(statusLower);
+                          if (!canAssign) return;
                           setSelectedAppointment(appointment);
                           setActiveModal("crew");
                         }}
-                        className={`${
-                          appointment.crew?.leadProfessional ||
-                          appointment.crew?.assignedTo?.length > 0
+                        disabled={
+                          !["pending", "scheduled", "confirmed", "rescheduled"].includes(
+                            appointment.status?.toLowerCase?.() || ""
+                          )
+                        }
+                        className={`$${''}{(() => {
+                          const statusLower = appointment.status?.toLowerCase?.() || "";
+                          const canAssign = ["pending", "scheduled", "confirmed", "rescheduled"].includes(statusLower);
+                          if (!canAssign) return "text-gray-400 cursor-not-allowed";
+                          return appointment.crew?.leadProfessional || appointment.crew?.assignedTo?.length > 0
                             ? "text-blue-600 hover:text-blue-800"
-                            : "text-green-600 hover:text-green-800"
-                        }`}
+                            : "text-green-600 hover:text-green-800";
+                        })()}`}
                       >
                         {appointment.crew?.leadProfessional ||
                         appointment.crew?.assignedTo?.length > 0
@@ -2260,7 +2275,7 @@ const AppointmentsPage = () => {
                               View
                             </button>
                             
-                            {(appointment.status === "Scheduled" || appointment.status === "Pending") && (
+                            {(appointment.status === "Scheduled" || appointment.status === "Pending" || appointment.status === "Confirmed" || appointment.status === "Rescheduled") && (
                               <div className="flex items-center gap-1">
                                 <button
                                   onClick={() => {
@@ -2273,7 +2288,7 @@ const AppointmentsPage = () => {
                                       : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
                                   }`}
                                 >
-                                  {appointment.crew?.assignedTo?.length > 0 ? "Crew" : "Assign"}
+                                  {appointment.crew?.assignedTo?.length > 0 ? " View Crew" : "Assign Crew"}
                                 </button>
                                 
                                 {/* <button
