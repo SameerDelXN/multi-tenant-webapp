@@ -311,12 +311,16 @@ const fetchGalleries = async () => {
     }
 
     const formDataToSend = prepareFormData();
+if (!tenant?.subdomain) {
+  toast.error('Tenant not detected. Please refresh.');
+  return;
+}
 
     try {
       setIsSubmitting(true);
       const response = await axios.post(`${API_URL}/gallery`, formDataToSend, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          // 'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${userData.token}`,
           // Add tenant header if needed
           ...(tenant?.subdomain && { 'X-Tenant-Subdomain': tenant.subdomain })
@@ -375,7 +379,7 @@ const fetchGalleries = async () => {
         formDataToSend,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            // 'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${userData.token}`,
             // Add tenant header if needed
             ...(tenant?.subdomain && { 'X-Tenant-Subdomain': tenant.subdomain })
