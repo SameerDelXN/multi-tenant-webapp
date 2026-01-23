@@ -35,32 +35,56 @@ export default function AddStaffModal({ onClose, onSuccess }) {
   });
   const [loading, setLoading] = useState(false);
 
+  const [errors, setErrors] = useState({});
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    // Clear error for this field when user types
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrors({}); // Reset errors
+
+    const newErrors = {};
+
+    // Name Validation
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(formData.name)) {
+      newErrors.name = 'Name can only contain letters';
+    }
+
+    // Email Validation: Must be @gmail.com
+    if (!formData.email.endsWith('@gmail.com')) {
+      newErrors.email = 'Email must be a valid @gmail.com address';
+    }
+
+    // Phone Validation: Exactly 10 digits
+    const normalizedPhone = (formData.phone || '').replace(/\D/g, '');
+    if (normalizedPhone.length !== 10) {
+      newErrors.phone = 'Please enter a valid 10-digit mobile number';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setLoading(false);
+      return;
+    }
 
     try {
-      const token = userData.token;
-// Normalize and validate phone number to exactly 10 digits
-const normalizedPhone = (formData.phone || '').replace(/\D/g, '');
-if (normalizedPhone.length !== 10) {
-  toast.error('Please enter a valid 10-digit mobile number');
-  setLoading(false);
-  return;
-}
-const staffData = {
-  ...formData,
-  phone: normalizedPhone,
-  tenantId: userData.tenantId._id
-};
+      const staffData = {
+        ...formData,
+        phone: normalizedPhone,
+        tenantId: userData.tenantId._id
+      };
       
       await apiClient.post('/auth/register', staffData);
 
@@ -68,7 +92,17 @@ const staffData = {
       onSuccess();
     } catch (error) {
       console.error('Error adding staff:', error);
-      toast.error(error.response?.data?.error || 'Failed to add staff member');
+      const backendError = error.response?.data?.error || 'Failed to add staff member';
+      
+      // Handle known backend validation errors
+      if (backendError.includes('already exists') || backendError.includes('duplicate')) {
+        setErrors(prev => ({
+          ...prev,
+          email: 'User with this email already exists', // Default assumption, or parse backend message better if possible
+        }));
+      }
+
+      toast.error(backendError);
     } finally {
       setLoading(false);
     }
@@ -96,8 +130,9 @@ const staffData = {
               value={formData.name}
               onChange={handleChange}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
           </div>
 
           <div>
@@ -108,23 +143,25 @@ const staffData = {
               value={formData.email}
               onChange={handleChange}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Phone</label>
            <input
-  type="tel"
-  name="phone"
-  value={formData.phone}
-  onChange={handleChange}
-  inputMode="numeric"
-  pattern="\d{10}"
-  placeholder="10-digit mobile number"
-  required
-  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-/>
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              inputMode="numeric"
+              pattern="\d{10}"
+              placeholder="10-digit mobile number"
+              required
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
           </div>
 
           <div>
@@ -143,13 +180,13 @@ const staffData = {
           <div>
             <label className="block text-sm font-medium text-gray-700">Role</label>
             <select
-  name="role"
-  value={formData.role}
-  onChange={handleChange}
-  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
->
-  <option value="staff">Staff</option>
-</select>
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="staff">Staff</option>
+            </select>
           </div>
 
           <div className="flex justify-end space-x-3 mt-6">

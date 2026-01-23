@@ -76,6 +76,7 @@ const fetchCustomer = async () => {
   }, [customerId, userData]);
 
   const handleChange = (e) => {
+    setError(''); // Clear error on change
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -85,6 +86,63 @@ const fetchCustomer = async () => {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+  setError('');
+
+  // Validation
+  const phoneRegex = /^\d{10}$/;
+  if (formData.phone && !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+    setError('Phone number must be exactly 10 digits');
+    return;
+  }
+
+  // Street Validation: Min 5 chars, digits/letters/spaces only
+  const streetRegex = /^[a-zA-Z0-9\s-]+$/;
+  if (!formData.street || formData.street.trim().length < 5) {
+    setError('Street address must be at least 5 characters');
+    return;
+  }
+  if (!streetRegex.test(formData.street)) {
+    setError('Street address can only contain letters, numbers, and spaces');
+    return;
+  }
+
+  // City Validation: Min 2 chars, letters only
+  const textOnlyRegex = /^[a-zA-Z\s]+$/;
+  if (!formData.city || formData.city.trim().length < 5) {
+    setError('City must be at least 5 characters');
+    return;
+  }
+  if (!textOnlyRegex.test(formData.city)) {
+    setError('City can only contain letters');
+    return;
+  }
+
+  // State Validation: Min 2 chars, letters only
+  if (!formData.state || formData.state.trim().length < 5) {
+    setError('State must be at least 5 characters');
+    return;
+  }
+  if (!textOnlyRegex.test(formData.state)) {
+    setError('State can only contain letters');
+    return;
+  }
+
+  // ZIP Code Validation: Exact 6 digits
+  const zipRegex = /^\d{6}$/;
+  if (!formData.zipCode || !zipRegex.test(formData.zipCode)) {
+    setError('ZIP Code must be exactly 6 digits');
+    return;
+  }
+
+  // Country Validation: Min 2 chars, letters only
+  if (!formData.country || formData.country.trim().length < 5) {
+    setError('Country must be at least 5 characters');
+    return;
+  }
+  if (!textOnlyRegex.test(formData.country)) {
+    setError('Country can only contain letters');
+    return;
+  }
   
   try {
     const response = await fetch(`${API_URL}/customers/${customerId}`, {
@@ -199,8 +257,11 @@ const handleSubmit = async (e) => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+                placeholder="e.g. 1234567890"
+                maxLength={10}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
               />
+              <p className="text-xs text-gray-500 mt-1">Must be exactly 10 digits</p>
             </div>
           </div>
 
@@ -208,7 +269,7 @@ const handleSubmit = async (e) => {
           <div className="space-y-4">
             <div>
               <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
-                Street Address
+                Street Address <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -217,12 +278,13 @@ const handleSubmit = async (e) => {
                 value={formData.street}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                required
               />
             </div>
 
             <div>
               <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                City
+                City <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -231,13 +293,14 @@ const handleSubmit = async (e) => {
                 value={formData.city}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-                  State/Province
+                  State/Province <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -246,12 +309,13 @@ const handleSubmit = async (e) => {
                   value={formData.state}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                  required
                 />
               </div>
 
               <div>
                 <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
-                  ZIP/Postal Code
+                  ZIP/Postal Code <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -260,13 +324,14 @@ const handleSubmit = async (e) => {
                   value={formData.zipCode}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                  required
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                Country
+                Country <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -275,6 +340,7 @@ const handleSubmit = async (e) => {
                 value={formData.country}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                required
               />
             </div>
           </div>

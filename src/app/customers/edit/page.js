@@ -500,6 +500,7 @@ export default function EditProfilePage() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    setError(null); // Clear error when user types
     
     // Handle nested objects like address.street
     if (name.includes('.')) {
@@ -530,6 +531,66 @@ export default function EditProfilePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null); // Clear previous errors
+
+    // Validation
+    const phoneRegex = /^\d{10}$/;
+    if (formData.phone && !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+      setError('Phone number must be exactly 10 digits');
+      return;
+    }
+
+    const { street, city, state, zipCode, country } = formData.address;
+
+    // Street Validation: Min 5 chars, digits/letters/spaces only
+    const streetRegex = /^[a-zA-Z0-9\s-]+$/; // Added hyphen support just in case
+    if (!street || street.trim().length < 5) {
+      setError('Street address must be at least 5 characters');
+      return;
+    }
+    if (!streetRegex.test(street)) {
+      setError('Street address can only contain letters, numbers, and spaces');
+      return;
+    }
+
+    // City Validation: Min 2 chars, letters only
+    const textOnlyRegex = /^[a-zA-Z\s]+$/;
+    if (!city || city.trim().length < 5) {
+      setError('City must be at least 5 characters');
+      return;
+    }
+    if (!textOnlyRegex.test(city)) {
+      setError('City can only contain letters');
+      return;
+    }
+
+    // State Validation: Min 2 chars, letters only
+    if (!state || state.trim().length < 5) {
+      setError('State must be at least 5 characters');
+      return;
+    }
+    if (!textOnlyRegex.test(state)) {
+      setError('State can only contain letters');
+      return;
+    }
+
+    // ZIP Code Validation: Exact 6 digits
+    const zipRegex = /^\d{6}$/;
+    if (!zipCode || !zipRegex.test(zipCode)) {
+      setError('ZIP Code must be exactly 6 digits');
+      return;
+    }
+
+    // Country Validation: Min 2 chars, letters only
+    if (!country || country.trim().length < 5) {
+      setError('Country must be at least 5 characters');
+      return;
+    }
+    if (!textOnlyRegex.test(country)) {
+      setError('Country can only contain letters');
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -650,9 +711,12 @@ export default function EditProfilePage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
+                      placeholder="e.g. 1234567890"
                       className="pl-10 w-full p-2 border rounded focus:ring-green-500 focus:border-green-500"
+                      maxLength={10}
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">Must be exactly 10 digits</p>
                 </div>
               </div>
             </div>
@@ -666,7 +730,7 @@ export default function EditProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Street
+                    Street <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -674,12 +738,13 @@ export default function EditProfilePage() {
                     value={formData.address?.street}
                     onChange={handleChange}
                     className="w-full p-2 border rounded focus:ring-green-500 focus:border-green-500"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    City
+                    City <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -687,12 +752,13 @@ export default function EditProfilePage() {
                     value={formData.address.city}
                     onChange={handleChange}
                     className="w-full p-2 border rounded focus:ring-green-500 focus:border-green-500"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    State
+                    State <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -700,12 +766,13 @@ export default function EditProfilePage() {
                     value={formData.address.state}
                     onChange={handleChange}
                     className="w-full p-2 border rounded focus:ring-green-500 focus:border-green-500"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ZIP Code
+                    ZIP Code <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -713,12 +780,13 @@ export default function EditProfilePage() {
                     value={formData.address.zipCode}
                     onChange={handleChange}
                     className="w-full p-2 border rounded focus:ring-green-500 focus:border-green-500"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Country
+                    Country <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -726,6 +794,7 @@ export default function EditProfilePage() {
                     value={formData.address.country}
                     onChange={handleChange}
                     className="w-full p-2 border rounded focus:ring-green-500 focus:border-green-500"
+                    required
                   />
                 </div>
               </div>
