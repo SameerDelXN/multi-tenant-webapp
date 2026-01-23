@@ -348,7 +348,7 @@ const BookingReview = ({ onBack }) => {
           </div>
 
           {/* Property and Notification Details */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h4 className="text-emerald-700 font-medium mb-2">Property Details</h4>
               <ul className="space-y-2 text-gray-700">
@@ -370,7 +370,7 @@ const BookingReview = ({ onBack }) => {
                 <li><strong>Reminder:</strong> {currentBooking?.notificationPreferences?.reminderDaysBefore || 1} days before</li>
               </ul>
             </div>
-          </div>
+          </div> */}
         </Card.Content>
       </Card>
 
